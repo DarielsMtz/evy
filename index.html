@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Galería Interactiva</title>
+  <title>Galería Interactiva | Álbumes</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Montserrat:wght@300;400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet" />
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -177,6 +177,11 @@
       padding: clamp(28px, 5vw, 48px) clamp(24px, 4vw, 40px);
       display: flex; flex-direction: column; justify-content: center;
     }
+    .lb-album {
+      font-size: 8px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--bg); background: var(--accent); padding: 4px 8px; border-radius: 2px;
+      align-self: flex-start; margin-bottom: 12px;
+    }
     .lb-num {
       font-size: 9px; letter-spacing: .3em; text-transform: uppercase;
       color: var(--accent); margin-bottom: 18px;
@@ -203,7 +208,6 @@
     }
     .lb-close:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* Mobile: stacks vertically, stays centered */
     @media (max-width: 600px) {
       .lb-inner {
         flex-direction: column;
@@ -212,17 +216,15 @@
         transform: translate(-50%, -50%) scale(.95);
         overflow-y: auto;
       }
-      #lightbox.open .lb-inner { transform: translate(-50%, -50%) scale(1); }
       .lb-img { flex: 0 0 auto; width: 100%; aspect-ratio: 4/3; max-height: 42vh; }
       .lb-info { padding: 24px 22px 32px; justify-content: flex-start; }
     }
 
-    /* Tablet */
     @media (min-width: 601px) and (max-width: 860px) {
       .lb-img { flex: 0 0 45%; }
     }
 
-    /* ── Grid modal ── */
+    /* ── Grid Modal & Navigation ── */
     #grid-modal {
       position: fixed; inset: 0; z-index: 200;
       background: rgba(10,10,12,.96);
@@ -236,20 +238,26 @@
 
     .gm-header {
       flex: 0 0 auto;
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex; align-items: flex-end; justify-content: space-between;
       padding: 28px 40px 20px;
       border-bottom: 1px solid rgba(255,255,255,.06);
     }
-    .gm-header-left { display: flex; flex-direction: column; gap: 5px; }
-    .gm-eyebrow {
-      font-size: 9px; letter-spacing: .35em; text-transform: uppercase;
-      color: var(--accent);
+    .gm-header-left { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+    
+    .gm-back {
+      background: transparent; border: none; color: var(--accent);
+      font-family: 'Montserrat', sans-serif; font-size: 9px; font-weight: 500;
+      letter-spacing: .2em; text-transform: uppercase; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; margin-bottom: 12px;
+      padding: 4px 10px 4px 0; opacity: 0.8; transition: opacity .2s, transform .2s;
     }
-    .gm-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1.2rem, 2.5vw, 1.8rem); font-weight: 300; color: var(--text);
-    }
+    .gm-back:hover { opacity: 1; transform: translateX(-4px); }
+    .gm-back svg { width: 12px; height: 12px; fill: currentColor; }
+
+    .gm-eyebrow { font-size: 9px; letter-spacing: .35em; text-transform: uppercase; color: var(--accent); }
+    .gm-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.2rem, 2.5vw, 1.8rem); font-weight: 300; color: var(--text); }
     .gm-count { font-size: 10px; letter-spacing: .2em; color: var(--muted); text-transform: uppercase; }
+    
     .gm-close {
       width: 40px; height: 40px; border-radius: 50%;
       border: 1px solid rgba(255,255,255,.1); background: transparent;
@@ -268,7 +276,83 @@
     .gm-body::-webkit-scrollbar { width: 4px; }
     .gm-body::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
 
-    .gm-grid {
+    /* ── Albums Grid (Folders) ── */
+    .folder-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 28px;
+    }
+
+    .folder-card {
+      position: relative;
+      aspect-ratio: 4/3;
+      cursor: pointer;
+      opacity: 0; transform: translateY(20px);
+      -webkit-tap-highlight-color: transparent;
+      perspective: 1200px;
+      margin-top: 14px; /* Space for the top tab */
+    }
+    .folder-card.visible { animation: gridIn .4s cubic-bezier(.4,0,.2,1) forwards; }
+
+    /* Back cover & tab */
+    .folder-back {
+      position: absolute; inset: 0;
+      background: var(--surface);
+      border-radius: 0 8px 8px 8px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    .folder-back::before {
+      content: ''; position: absolute;
+      bottom: 100%; left: 0;
+      width: 45%; height: 14px;
+      background: var(--surface);
+      border-radius: 6px 6px 0 0;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+      border-bottom: none;
+    }
+
+    /* Paper/Image sticking out */
+    .folder-paper {
+      position: absolute;
+      bottom: 6px; left: 8px; right: 8px; top: -12px;
+      background: #111; border-radius: 6px;
+      overflow: hidden;
+      transform-origin: bottom center;
+      transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .folder-paper img {
+      width: 100%; height: 100%; object-fit: cover;
+      opacity: 0.55; transition: opacity 0.4s;
+    }
+
+    /* Front Flap */
+    .folder-front {
+      position: absolute; inset: 0;
+      background: linear-gradient(145deg, #18181d 0%, var(--surface) 100%);
+      border-radius: 0 8px 8px 8px;
+      padding: 16px; display: flex; flex-direction: column; justify-content: flex-end;
+      transform-origin: bottom center;
+      transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.02);
+      z-index: 2;
+    }
+    .folder-title {
+      font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; 
+      font-weight: 400; color: var(--text); line-height: 1.1; margin-bottom: 4px;
+    }
+    .folder-count { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); }
+
+    /* Folder Hover Effects */
+    .folder-card:hover .folder-front { transform: rotateX(-12deg); }
+    .folder-card:hover .folder-paper { transform: translateY(-16px) scale(1.02); }
+    .folder-card:hover .folder-paper img { opacity: 0.9; }
+
+
+    /* ── Photos Grid (Inside Album) ── */
+    .photo-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
       gap: 12px;
@@ -282,10 +366,10 @@
       transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s;
       -webkit-tap-highlight-color: transparent;
     }
-    .gm-item.visible {
-      animation: gridIn .4s cubic-bezier(.4,0,.2,1) forwards;
-    }
+    .gm-item.visible { animation: gridIn .4s cubic-bezier(.4,0,.2,1) forwards; }
+    
     @keyframes gridIn { to { opacity: 1; transform: translateY(0); } }
+    
     .gm-item:hover {
       transform: translateY(-4px) scale(1.02);
       box-shadow: 0 20px 48px rgba(0,0,0,.7), 0 0 0 1px var(--accent-dim);
@@ -312,16 +396,16 @@
     @media (max-width: 600px) {
       .gm-header { padding: 18px 18px 14px; }
       .gm-body   { padding: 18px 18px 28px; }
-      .gm-grid   { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .folder-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
+      .photo-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     }
 
-    /* ── Animations ── */
+    /* ── Animations & Background FX ── */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(12px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Film grain ── */
     #grain {
       position: fixed; inset: -50%; width: 200%; height: 200%;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -333,7 +417,6 @@
       50% { transform: translate(4%,-1%); } 75% { transform: translate(-2%,4%); }
     }
 
-    /* ── Center pulse ── */
     #glow {
       position: fixed; top: 50%; left: 50%;
       transform: translate(-50%,-50%);
@@ -365,17 +448,21 @@
     <button class="hero-cta" id="ctaBtn">Explorar galería</button>
   </section>
 
-  <div id="grid-modal" role="dialog" aria-modal="true" aria-label="Todas las fotografías">
+  <div id="grid-modal" role="dialog" aria-modal="true" aria-label="Explorador de colecciones">
     <div class="gm-header">
       <div class="gm-header-left">
-        <span class="gm-eyebrow">Colección completa</span>
-        <h2 class="gm-title">Todas las fotografías</h2>
+        <button class="gm-back" id="gmBack" style="display: none;" aria-label="Volver a álbumes">
+          <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          Volver a álbumes
+        </button>
+        <span class="gm-eyebrow" id="gmEyebrow">Categorías</span>
+        <h2 class="gm-title" id="gmTitle">Álbumes</h2>
         <span class="gm-count" id="gmCount"></span>
       </div>
-      <button class="gm-close" id="gmClose" aria-label="Cerrar">✕</button>
+      <button class="gm-close" id="gmClose" aria-label="Cerrar ventana">✕</button>
     </div>
     <div class="gm-body">
-      <div class="gm-grid" id="gmGrid"></div>
+      <div id="gmGrid"></div>
     </div>
   </div>
 
@@ -383,77 +470,30 @@
     <div class="lb-inner">
       <img class="lb-img" id="lbImg" src="" alt="" />
       <div class="lb-info">
+        <span class="lb-album" id="lbAlbumTag"></span>
         <p class="lb-num"  id="lbNum"></p>
         <h2 class="lb-title" id="lbTitle"></h2>
         <p class="lb-desc"  id="lbDesc"></p>
       </div>
-      <button class="lb-close" id="lbClose" aria-label="Cerrar">✕</button>
+      <button class="lb-close" id="lbClose" aria-label="Cerrar imagen">✕</button>
     </div>
   </div>
 
 <script>
-/* ── PHOTO DATA (Unsplash stock) ────────────────────────────── */
+/* ── PHOTO DATA CATEGORIZADA ────────────────────────────── */
 const PHOTOS = [
-  {
-    id:'1506905925346-21bda4d32df4', aspect:'portrait',
-    title:'Cima en calma',
-    desc:'El amanecer disuelve la noche en capas de luz difusa. Tomada al filo de las 6:12 h, esta imagen captura el instante exacto en que el mundo recupera su forma entre los picos.'
-  },
-  {
-    id:'1519681393784-d120267933ba', aspect:'portrait',
-    title:'Firmamento abierto',
-    desc:'La Vía Láctea sobre los Alpes. A 2 800 metros de altitud, la ausencia de contaminación lumínica convierte el cielo en un mapa vivo. Exposición de 25 segundos, ISO 3200.'
-  },
-  {
-    id:'1441974231531-c6227db76b6e', aspect:'portrait',
-    title:'Túnel de luz',
-    desc:'Un sendero en el Parque Nacional de los Redwoods. La luz filtrada entre los troncos no ilumina: susurra. El bosque tiene su propio idioma y esta foto intenta transcribirlo.'
-  },
-  {
-    id:'1470071459604-3b5ec3a7fe05', aspect:'landscape',
-    title:'Oro tardío',
-    desc:'La última hora de luz sobre las colinas toscanas. Cada verano, los mismos campos vuelven a pintarse de dorado como si fuera la primera vez. El tiempo no avanza aquí; se repite.'
-  },
-  {
-    id:'1477959858617-67f85cf4f1df', aspect:'landscape',
-    title:'Ciudad en vela',
-    desc:'Manhattan a las 3 de la madrugada. Cuando todos duermen, la ciudad no apaga las luces: las baja de volumen. Un millón de ventanas, cada una con su historia encendida.'
-  },
-  {
-    id:'1501854140801-50d01698950b', aspect:'portrait',
-    title:'Niebla viva',
-    desc:'Amanecer en los Cárpatos. La niebla asciende entre los pinos como una marea lenta. Esta fotografía tardó tres madrugadas consecutivas en encontrar esta luz exacta.'
-  },
-  {
-    id:'1518173946687-a4c8892bbd9f', aspect:'portrait',
-    title:'Geometría vertical',
-    desc:'Los rascacielos de Chicago desde el río. La arquitectura como ambición congelada en acero y cristal. La ciudad no se construyó hacia arriba para tocar el cielo: lo hizo para que el cielo la notara.'
-  },
-  {
-    id:'1493246507139-91e8fad9978e', aspect:'landscape',
-    title:'Reflejo exacto',
-    desc:'El lago Moraine en Alberta, Canadá. La superficie guarda una copia perfecta del mundo hasta que el viento decide romperla. Esta imagen existe gracias a diez segundos de calma absoluta.'
-  },
-  {
-    id:'1504701954957-2010ec3bcec1', aspect:'landscape',
-    title:'Desierto vivo',
-    desc:'Las dunas del Sahara al atardecer. El desierto no está vacío: está lleno de silencio. Y el silencio, a estas horas de luz rasante, tiene textura, sombra y movimiento propio.'
-  },
-  {
-    id:'1535591273668-578e31182c4f', aspect:'portrait',
-    title:'Cascada muda',
-    desc:'Skógafoss, Islandia, en invierno. A -12 °C, el agua sigue cayendo. La cámara captura un segundo de algo que lleva miles de años ocurriendo sin público y sin pausa.'
-  },
-  {
-    id:'1510797215324-95aa89f43c33', aspect:'landscape',
-    title:'Costa quebrada',
-    desc:'Los acantilados de Moher bajo tormenta. El mar no convence: impone. Y aun así, todo el mundo se acerca al borde. Algo en nosotros reconoce ese poder y quiere mirarle a los ojos.'
-  },
-  {
-    id:'1525193612562-aa34e4f3e8f7', aspect:'landscape',
-    title:'Lluvia de color',
-    desc:'Festival Holi en Jodhpur. Durante unos minutos, el color lo borra todo: las diferencias, los nombres, la distancia entre las personas. La fotografía intenta detener ese momento de igualdad.'
-  },
+  { id:'1506905925346-21bda4d32df4', aspect:'portrait', album: 'Naturaleza', title:'Cima en calma', desc:'El amanecer disuelve la noche en capas de luz difusa. Tomada al filo de las 6:12 h.' },
+  { id:'1519681393784-d120267933ba', aspect:'portrait', album: 'Naturaleza', title:'Firmamento abierto', desc:'La Vía Láctea sobre los Alpes. A 2 800 metros de altitud, la ausencia de contaminación lumínica convierte el cielo en un mapa vivo.' },
+  { id:'1441974231531-c6227db76b6e', aspect:'portrait', album: 'Naturaleza', title:'Túnel de luz', desc:'Un sendero en el Parque Nacional de los Redwoods. La luz filtrada entre los troncos no ilumina: susurra.' },
+  { id:'1470071459604-3b5ec3a7fe05', aspect:'landscape', album: 'Viajes', title:'Oro tardío', desc:'La última hora de luz sobre las colinas toscanas. Cada verano, los mismos campos vuelven a pintarse de dorado.' },
+  { id:'1477959858617-67f85cf4f1df', aspect:'landscape', album: 'Urbano', title:'Ciudad en vela', desc:'Manhattan a las 3 de la madrugada. Cuando todos duermen, la ciudad no apaga las luces: las baja de volumen.' },
+  { id:'1501854140801-50d01698950b', aspect:'portrait', album: 'Naturaleza', title:'Niebla viva', desc:'Amanecer en los Cárpatos. La niebla asciende entre los pinos como una marea lenta.' },
+  { id:'1518173946687-a4c8892bbd9f', aspect:'portrait', album: 'Urbano', title:'Geometría vertical', desc:'Los rascacielos de Chicago desde el río. La arquitectura como ambición congelada en acero y cristal.' },
+  { id:'1493246507139-91e8fad9978e', aspect:'landscape', album: 'Viajes', title:'Reflejo exacto', desc:'El lago Moraine en Alberta, Canadá. La superficie guarda una copia perfecta del mundo hasta que el viento decide romperla.' },
+  { id:'1504701954957-2010ec3bcec1', aspect:'landscape', album: 'Viajes', title:'Desierto vivo', desc:'Las dunas del Sahara al atardecer. El desierto no está vacío: está lleno de silencio.' },
+  { id:'1535591273668-578e31182c4f', aspect:'portrait', album: 'Naturaleza', title:'Cascada muda', desc:'Skógafoss, Islandia, en invierno. A -12 °C, el agua sigue cayendo.' },
+  { id:'1510797215324-95aa89f43c33', aspect:'landscape', album: 'Naturaleza', title:'Costa quebrada', desc:'Los acantilados de Moher bajo tormenta. El mar no convence: impone.' },
+  { id:'1525193612562-aa34e4f3e8f7', aspect:'landscape', album: 'Cultura', title:'Lluvia de color', desc:'Festival Holi en Jodhpur. Durante unos minutos, el color lo borra todo: las diferencias, los nombres.' },
 ];
 
 /* ── HELPERS ─────────────────────────────────────────────────── */
@@ -526,7 +566,6 @@ function spawn() {
   card.addEventListener('click', () => openLb(data));
   withHover(card);
 
-  /* travel */
   const dist  = maxR() * (.45 + Math.random() * .55);
   const sx = cx() - w/2, sy = cy() - h/2;
   const dx = cx() + Math.cos(angle) * dist - w/2;
@@ -552,23 +591,131 @@ const burst = mobile() ? 3 : 5;
 for (let i = 0; i < burst; i++) setTimeout(spawn, i * 200);
 setInterval(spawn, INTERVAL);
 
-/* ── LIGHTBOX ────────────────────────────────────────────────── */
-const lb      = document.getElementById('lightbox');
-const lbImg   = document.getElementById('lbImg');
-const lbTitle = document.getElementById('lbTitle');
-const lbDesc  = document.getElementById('lbDesc');
-const lbNum   = document.getElementById('lbNum');
-const lbClose = document.getElementById('lbClose');
 
-function openLb(data) {
-  const n  = PHOTOS.indexOf(data) + 1;
+/* ── MODAL DE NAVEGACIÓN Y CARPETAS ──────────────────────────── */
+const gm        = document.getElementById('grid-modal');
+const gmGrid    = document.getElementById('gmGrid');
+const gmClose   = document.getElementById('gmClose');
+const gmBack    = document.getElementById('gmBack');
+const gmEyebrow = document.getElementById('gmEyebrow');
+const gmTitle   = document.getElementById('gmTitle');
+const gmCount   = document.getElementById('gmCount');
+
+// Extraer categorías únicas
+const albumsList = [...new Set(PHOTOS.map(p => p.album))];
+let currentViewContext = null; 
+
+// Vista 1: Carpetas
+function buildAlbums() {
+  currentViewContext = 'albums';
+  gmBack.style.display = 'none';
+  gmEyebrow.textContent = 'Explora por categoría';
+  gmTitle.textContent = 'Colecciones';
+  gmCount.textContent = `${albumsList.length} álbumes`;
+  gmGrid.className = 'folder-grid';
+  gmGrid.innerHTML = '';
+
+  albumsList.forEach((albumName, i) => {
+    const albumPhotos = PHOTOS.filter(p => p.album === albumName);
+    const coverPhoto = albumPhotos[0];
+
+    const folder = document.createElement('div');
+    folder.className = 'folder-card';
+    
+    // Estructura de la carpeta CSS
+    folder.innerHTML = `
+      <div class="folder-back"></div>
+      <div class="folder-paper">
+        <img src="${unsplash(coverPhoto.id, 400, 300)}" alt="Portada de ${albumName}">
+      </div>
+      <div class="folder-front">
+        <h3 class="folder-title">${albumName}</h3>
+        <span class="folder-count">${albumPhotos.length} fotografías</span>
+      </div>
+    `;
+
+    folder.addEventListener('click', () => buildPhotos(albumName));
+    withHover(folder);
+    gmGrid.appendChild(folder);
+
+    setTimeout(() => folder.classList.add('visible'), i * 60);
+  });
+}
+
+// Vista 2: Fotos dentro de una carpeta
+function buildPhotos(albumName) {
+  currentViewContext = albumName;
+  gmBack.style.display = 'inline-flex';
+  gmEyebrow.textContent = 'Álbum';
+  gmTitle.textContent = albumName;
+  
+  const albumPhotos = PHOTOS.filter(p => p.album === albumName);
+  gmCount.textContent = `${albumPhotos.length} imágenes`;
+  
+  gmGrid.className = 'photo-grid';
+  gmGrid.innerHTML = '';
+
+  albumPhotos.forEach((data, i) => {
+    const item = document.createElement('div');
+    item.className = 'gm-item';
+
+    const img = document.createElement('img');
+    img.src = unsplash(data.id, 400, 560);
+    img.alt = data.title;
+    img.loading = 'lazy';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'gm-item-overlay';
+    overlay.innerHTML = `<p class="gm-item-title">${data.title}</p><span class="gm-item-cue">Ver detalle</span>`;
+
+    item.append(img, overlay);
+    
+    // Al hacer click abrimos el Lightbox
+    item.addEventListener('click', () => {
+      // Opcional: no cerrar el grid, solo poner el lightbox por encima
+      openLb(data, albumPhotos); 
+    });
+    
+    withHover(item);
+    gmGrid.appendChild(item);
+
+    setTimeout(() => item.classList.add('visible'), i * 55);
+  });
+}
+
+function openGm() {
+  buildAlbums();
+  gm.classList.add('open');
+}
+function closeGm() { gm.classList.remove('open'); }
+
+gmBack.addEventListener('click', buildAlbums);
+gmClose.addEventListener('click', closeGm);
+withHover(gmClose);
+withHover(gmBack);
+
+/* ── LIGHTBOX ────────────────────────────────────────────────── */
+const lb         = document.getElementById('lightbox');
+const lbImg      = document.getElementById('lbImg');
+const lbTitle    = document.getElementById('lbTitle');
+const lbDesc     = document.getElementById('lbDesc');
+const lbNum      = document.getElementById('lbNum');
+const lbAlbumTag = document.getElementById('lbAlbumTag');
+const lbClose    = document.getElementById('lbClose');
+
+// Se pasa el contexto de las fotos (si viene de un álbum o general)
+function openLb(data, contextPhotos = PHOTOS) {
+  const n  = contextPhotos.indexOf(data) + 1;
   const lw = mobile() ? 800  : 1400;
   const lh = mobile() ? 600  : 1800;
-  lbImg.src             = unsplash(data.id, lw, lh);
-  lbImg.alt             = data.title;
-  lbTitle.textContent   = data.title;
-  lbDesc.textContent    = data.desc;
-  lbNum.textContent     = `${String(n).padStart(2,'0')} / ${String(PHOTOS.length).padStart(2,'0')}`;
+  
+  lbImg.src               = unsplash(data.id, lw, lh);
+  lbImg.alt               = data.title;
+  lbTitle.textContent     = data.title;
+  lbDesc.textContent      = data.desc;
+  lbAlbumTag.textContent  = data.album;
+  lbNum.textContent       = `${String(n).padStart(2,'0')} / ${String(contextPhotos.length).padStart(2,'0')}`;
+  
   lb.classList.add('open');
 }
 
@@ -578,50 +725,19 @@ lbClose.addEventListener('click', closeLb);
 lb.addEventListener('click', e => { if (e.target === lb) closeLb(); });
 withHover(lbClose);
 
-/* ── GRID MODAL ──────────────────────────────────────────────── */
-const gm      = document.getElementById('grid-modal');
-const gmGrid  = document.getElementById('gmGrid');
-const gmClose = document.getElementById('gmClose');
-const gmCount = document.getElementById('gmCount');
+// Teclado
+document.addEventListener('keydown', e => { 
+  if (e.key === 'Escape') { 
+    if(lb.classList.contains('open')) {
+       closeLb();
+    } else if(gm.classList.contains('open')) {
+       if (currentViewContext !== 'albums') buildAlbums();
+       else closeGm();
+    }
+  } 
+});
 
-function buildGrid() {
-  gmGrid.innerHTML = '';
-  gmCount.textContent = `${PHOTOS.length} imágenes`;
-  PHOTOS.forEach((data, i) => {
-    const item = document.createElement('div');
-    item.className = 'gm-item';
-
-    const img = document.createElement('img');
-    img.src     = unsplash(data.id, 400, 560);
-    img.alt     = data.title;
-    img.loading = 'lazy';
-
-    const overlay = document.createElement('div');
-    overlay.className = 'gm-item-overlay';
-    overlay.innerHTML = `<p class="gm-item-title">${data.title}</p><span class="gm-item-cue">Ver detalle</span>`;
-
-    item.append(img, overlay);
-    item.addEventListener('click', () => { closeGm(); openLb(data); });
-    withHover(item);
-    gmGrid.appendChild(item);
-
-    // staggered entrance
-    setTimeout(() => item.classList.add('visible'), i * 55);
-  });
-}
-
-function openGm() {
-  buildGrid();
-  gm.classList.add('open');
-}
-function closeGm() { gm.classList.remove('open'); }
-
-gmClose.addEventListener('click', closeGm);
-gm.addEventListener('click', e => { if (e.target === gm) closeGm(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeLb(); closeGm(); } });
-withHover(gmClose);
-
-/* ── CTA ─────────────────────────────────────────────────────── */
+/* ── CTA HERO ────────────────────────────────────────────────── */
 const cta = document.getElementById('ctaBtn');
 cta.addEventListener('click', openGm);
 withHover(cta);
