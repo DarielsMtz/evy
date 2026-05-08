@@ -148,31 +148,32 @@
     /* ── Lightbox ── */
     #lightbox {
       position: fixed; inset: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: center;
       background: rgba(10,10,12,.88);
       backdrop-filter: blur(18px) saturate(.6);
       -webkit-backdrop-filter: blur(18px) saturate(.6);
       opacity: 0; pointer-events: none; transition: opacity .4s;
-      padding: 16px;
     }
     #lightbox.open { opacity: 1; pointer-events: all; }
 
     .lb-inner {
-      position: relative; display: flex;
-      width: 100%; max-width: min(860px, 96vw); max-height: 90vh;
-      border-radius: 8px; overflow: hidden;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(.95);
+      display: flex;
+      width: min(860px, 92vw);
+      height: min(560px, 88vh);
+      border-radius: 10px; overflow: hidden;
       box-shadow: 0 32px 96px rgba(0,0,0,.8);
-      transform: scale(.95) translateY(16px);
       transition: transform .4s cubic-bezier(.4,0,.2,1);
     }
-    #lightbox.open .lb-inner { transform: scale(1) translateY(0); }
+    #lightbox.open .lb-inner { transform: translate(-50%, -50%) scale(1); }
 
     .lb-img {
-      flex: 0 0 50%; aspect-ratio: 3/4;
+      flex: 0 0 48%; width: 48%; height: 100%;
       object-fit: cover; display: block;
     }
     .lb-info {
-      background: var(--surface); flex: 1; overflow-y: auto;
+      background: var(--surface); flex: 1; height: 100%; overflow-y: auto;
       padding: clamp(28px, 5vw, 48px) clamp(24px, 4vw, 40px);
       display: flex; flex-direction: column; justify-content: center;
     }
@@ -202,22 +203,116 @@
     }
     .lb-close:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* Mobile: lightbox stacks vertically and slides from bottom */
+    /* Mobile: stacks vertically, stays centered */
     @media (max-width: 600px) {
-      #lightbox { align-items: flex-end; padding: 0; }
       .lb-inner {
         flex-direction: column;
-        max-height: 92vh; border-radius: 16px 16px 0 0;
-        transform: translateY(40px) scale(.98);
+        width: 92vw; max-height: 88vh;
+        border-radius: 10px;
+        transform: translate(-50%, -50%) scale(.95);
+        overflow-y: auto;
       }
-      #lightbox.open .lb-inner { transform: translateY(0) scale(1); }
-      .lb-img { flex: 0 0 auto; width: 100%; aspect-ratio: 4/3; max-height: 45vh; }
+      #lightbox.open .lb-inner { transform: translate(-50%, -50%) scale(1); }
+      .lb-img { flex: 0 0 auto; width: 100%; aspect-ratio: 4/3; max-height: 42vh; }
       .lb-info { padding: 24px 22px 32px; justify-content: flex-start; }
     }
 
     /* Tablet */
     @media (min-width: 601px) and (max-width: 860px) {
       .lb-img { flex: 0 0 45%; }
+    }
+
+    /* ── Grid modal ── */
+    #grid-modal {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(10,10,12,.96);
+      backdrop-filter: blur(24px) saturate(.5);
+      -webkit-backdrop-filter: blur(24px) saturate(.5);
+      opacity: 0; pointer-events: none;
+      transition: opacity .4s ease;
+      display: flex; flex-direction: column;
+    }
+    #grid-modal.open { opacity: 1; pointer-events: all; }
+
+    .gm-header {
+      flex: 0 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 28px 40px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .gm-header-left { display: flex; flex-direction: column; gap: 5px; }
+    .gm-eyebrow {
+      font-size: 9px; letter-spacing: .35em; text-transform: uppercase;
+      color: var(--accent);
+    }
+    .gm-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.2rem, 2.5vw, 1.8rem); font-weight: 300; color: var(--text);
+    }
+    .gm-count { font-size: 10px; letter-spacing: .2em; color: var(--muted); text-transform: uppercase; }
+    .gm-close {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.1); background: transparent;
+      color: var(--muted); font-size: 15px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: border-color .2s, color .2s; flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .gm-close:hover { border-color: var(--accent); color: var(--accent); }
+
+    .gm-body {
+      flex: 1 1 auto; overflow-y: auto;
+      padding: 32px 40px 40px;
+      scrollbar-width: thin; scrollbar-color: var(--accent-dim) transparent;
+    }
+    .gm-body::-webkit-scrollbar { width: 4px; }
+    .gm-body::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 2px; }
+
+    .gm-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 12px;
+    }
+
+    .gm-item {
+      position: relative; cursor: pointer;
+      border-radius: 6px; overflow: hidden;
+      aspect-ratio: 3/4; background: var(--surface);
+      opacity: 0; transform: translateY(20px);
+      transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .gm-item.visible {
+      animation: gridIn .4s cubic-bezier(.4,0,.2,1) forwards;
+    }
+    @keyframes gridIn { to { opacity: 1; transform: translateY(0); } }
+    .gm-item:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 20px 48px rgba(0,0,0,.7), 0 0 0 1px var(--accent-dim);
+    }
+    .gm-item img {
+      display: block; width: 100%; height: 100%;
+      object-fit: cover; transition: transform .4s ease;
+    }
+    .gm-item:hover img { transform: scale(1.06); }
+
+    .gm-item-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(10,10,12,.85) 0%, transparent 55%);
+      display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 14px 12px; opacity: 0; transition: opacity .3s;
+    }
+    .gm-item:hover .gm-item-overlay { opacity: 1; }
+    .gm-item-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem; font-weight: 300; color: var(--text); line-height: 1.1; margin-bottom: 4px;
+    }
+    .gm-item-cue { font-size: 8px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); }
+
+    @media (max-width: 600px) {
+      .gm-header { padding: 18px 18px 14px; }
+      .gm-body   { padding: 18px 18px 28px; }
+      .gm-grid   { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     }
 
     /* ── Animations ── */
@@ -269,6 +364,20 @@
     <div class="hero-divider"></div>
     <button class="hero-cta" id="ctaBtn">Explorar galería</button>
   </section>
+
+  <div id="grid-modal" role="dialog" aria-modal="true" aria-label="Todas las fotografías">
+    <div class="gm-header">
+      <div class="gm-header-left">
+        <span class="gm-eyebrow">Colección completa</span>
+        <h2 class="gm-title">Todas las fotografías</h2>
+        <span class="gm-count" id="gmCount"></span>
+      </div>
+      <button class="gm-close" id="gmClose" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="gm-body">
+      <div class="gm-grid" id="gmGrid"></div>
+    </div>
+  </div>
 
   <div id="lightbox" role="dialog" aria-modal="true">
     <div class="lb-inner">
@@ -467,15 +576,54 @@ function closeLb() { lb.classList.remove('open'); }
 
 lbClose.addEventListener('click', closeLb);
 lb.addEventListener('click', e => { if (e.target === lb) closeLb(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLb(); });
 withHover(lbClose);
+
+/* ── GRID MODAL ──────────────────────────────────────────────── */
+const gm      = document.getElementById('grid-modal');
+const gmGrid  = document.getElementById('gmGrid');
+const gmClose = document.getElementById('gmClose');
+const gmCount = document.getElementById('gmCount');
+
+function buildGrid() {
+  gmGrid.innerHTML = '';
+  gmCount.textContent = `${PHOTOS.length} imágenes`;
+  PHOTOS.forEach((data, i) => {
+    const item = document.createElement('div');
+    item.className = 'gm-item';
+
+    const img = document.createElement('img');
+    img.src     = unsplash(data.id, 400, 560);
+    img.alt     = data.title;
+    img.loading = 'lazy';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'gm-item-overlay';
+    overlay.innerHTML = `<p class="gm-item-title">${data.title}</p><span class="gm-item-cue">Ver detalle</span>`;
+
+    item.append(img, overlay);
+    item.addEventListener('click', () => { closeGm(); openLb(data); });
+    withHover(item);
+    gmGrid.appendChild(item);
+
+    // staggered entrance
+    setTimeout(() => item.classList.add('visible'), i * 55);
+  });
+}
+
+function openGm() {
+  buildGrid();
+  gm.classList.add('open');
+}
+function closeGm() { gm.classList.remove('open'); }
+
+gmClose.addEventListener('click', closeGm);
+gm.addEventListener('click', e => { if (e.target === gm) closeGm(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeLb(); closeGm(); } });
+withHover(gmClose);
 
 /* ── CTA ─────────────────────────────────────────────────────── */
 const cta = document.getElementById('ctaBtn');
-cta.addEventListener('click', () => {
-  const n = mobile() ? 4 : 7;
-  for (let i = 0; i < n; i++) setTimeout(spawn, i * 100);
-});
+cta.addEventListener('click', openGm);
 withHover(cta);
 </script>
 </body>
