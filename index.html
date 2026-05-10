@@ -147,7 +147,8 @@
 
     /* ── Lightbox ── */
     #lightbox {
-      position: fixed; inset: 0; z-index: 100;
+      position: fixed; inset: 0; 
+      z-index: 300; /* Solución: Cambiado de 100 a 300 para estar sobre el grid-modal (z-index 200) */
       background: rgba(10,10,12,.88);
       backdrop-filter: blur(18px) saturate(.6);
       -webkit-backdrop-filter: blur(18px) saturate(.6);
@@ -481,7 +482,7 @@
 
 <script>
 /* ── PHOTO DATA CATEGORIZADA ────────────────────────────── */
-const PHOTOS = [
+let PHOTOS = [
   { id:'1506905925346-21bda4d32df4', aspect:'portrait', album: 'Naturaleza', title:'Cima en calma', desc:'El amanecer disuelve la noche en capas de luz difusa. Tomada al filo de las 6:12 h.' },
   { id:'1519681393784-d120267933ba', aspect:'portrait', album: 'Naturaleza', title:'Firmamento abierto', desc:'La Vía Láctea sobre los Alpes. A 2 800 metros de altitud, la ausencia de contaminación lumínica convierte el cielo en un mapa vivo.' },
   { id:'1441974231531-c6227db76b6e', aspect:'portrait', album: 'Naturaleza', title:'Túnel de luz', desc:'Un sendero en el Parque Nacional de los Redwoods. La luz filtrada entre los troncos no ilumina: susurra.' },
@@ -495,6 +496,32 @@ const PHOTOS = [
   { id:'1510797215324-95aa89f43c33', aspect:'landscape', album: 'Naturaleza', title:'Costa quebrada', desc:'Los acantilados de Moher bajo tormenta. El mar no convence: impone.' },
   { id:'1525193612562-aa34e4f3e8f7', aspect:'landscape', album: 'Cultura', title:'Lluvia de color', desc:'Festival Holi en Jodhpur. Durante unos minutos, el color lo borra todo: las diferencias, los nombres.' },
 ];
+
+/* ── CARGAR DATOS DESDE EL PANEL DE CONTROL ───────────────────── */
+try {
+  const savedData = localStorage.getItem('nuestra_historia_datos');
+  if (savedData) {
+    const { photos, texts } = JSON.parse(savedData);
+    
+    // Sobrescribir fotos si hay fotos guardadas
+    if (photos && photos.length > 0) {
+      PHOTOS = photos;
+    }
+    
+    // Sobrescribir los textos del DOM (se usa un pequeño retardo para asegurar carga del DOM)
+    if (texts) {
+      window.addEventListener('DOMContentLoaded', () => {
+        const setEl = (sel, html) => { const e = document.querySelector(sel); if(e) e.innerHTML = html; };
+        setEl('.hero-eyebrow', texts.eyebrow);
+        setEl('.hero-title', texts.title);
+        setEl('.hero-sub', texts.sub);
+        setEl('.hero-cta', texts.cta);
+        setEl('#gmEyebrow', texts.gmEyebrow);
+        setEl('#gmTitle', texts.gmTitle);
+      });
+    }
+  }
+} catch(e) { console.error("Error al cargar los datos del panel", e); }
 
 /* ── HELPERS ─────────────────────────────────────────────────── */
 const mobile  = () => window.innerWidth < 600;
@@ -512,6 +539,8 @@ function photoSize(aspect) {
 }
 
 function unsplash(id, w, h) {
+  // Verificamos si es una URL en base64 de una foto subida localmente
+  if (id && id.startsWith('data:image')) return id; 
   return `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=75`;
 }
 
